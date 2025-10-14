@@ -74,7 +74,7 @@ fn read_xml_tag<B: BufRead>(
     };
     buf.clear();
     let res = match reader.read_event(buf)? {
-        Event::Text(e) => e.unescape_and_decode(&reader)?,
+        Event::Text(e) => e.unescape_and_decode(reader)?,
         _ => return Err(IsbnRangeError::WrongXmlBody),
     };
     match reader.read_event(buf)? {
@@ -154,7 +154,8 @@ impl Segment {
                     if length.len() != 1 {
                         return Err(IsbnRangeError::BadLengthString);
                     }
-                    let length = usize::from_str_radix(&length, 10)
+                    let length = length
+                        .parse::<usize>()
                         .map_err(|_| IsbnRangeError::BadLengthString)?;
                     if length > 7 {
                         return Err(IsbnRangeError::LengthTooLarge);
@@ -413,7 +414,10 @@ impl IsbnRange {
     /// # Errors
     /// If the ISBN is not valid, as determined by the current ISBN rules, an error will be
     /// returned.
-    pub fn hyphenate<'a, I: Into<IsbnRef<'a>>>(&self, isbn: I) -> Result<ArrayString<17>, IsbnError> {
+    pub fn hyphenate<'a, I: Into<IsbnRef<'a>>>(
+        &self,
+        isbn: I,
+    ) -> Result<ArrayString<17>, IsbnError> {
         match isbn.into() {
             IsbnRef::_10(isbn) => self.hyphenate_isbn(isbn),
             IsbnRef::_13(isbn) => self.hyphenate_isbn(isbn),
@@ -462,7 +466,10 @@ impl IsbnRange {
     /// # Errors
     /// If the ISBN is not valid, as determined by `self`, an error will be
     /// returned.
-    pub fn get_registration_group<'a, I: Into<IsbnRef<'a>>>(&self, isbn: I) -> Result<&str, IsbnError> {
+    pub fn get_registration_group<'a, I: Into<IsbnRef<'a>>>(
+        &self,
+        isbn: I,
+    ) -> Result<&str, IsbnError> {
         match isbn.into() {
             IsbnRef::_10(isbn) => self.get_registration_group_isbn(isbn),
             IsbnRef::_13(isbn) => self.get_registration_group_isbn(isbn),
@@ -482,7 +489,7 @@ impl IsbnRange {
                 isbn.group_prefix(registration_group_segment_length),
             ))
             .ok_or(IsbnError::InvalidGroup)?;
-        Ok(&segment
+        Ok(segment
             .group(isbn.segment(registration_group_segment_length))?
             .name)
     }
@@ -508,8 +515,8 @@ impl IsbnRange {
 
 #[cfg(test)]
 mod test {
-    use crate::Isbn;
     use super::*;
+    use crate::Isbn;
 
     #[test]
     fn test_isbn_range_opens() {

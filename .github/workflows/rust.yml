@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        rust: [stable, nightly, beta, 1.40.0]
+        rust: [stable, nightly, beta, 1.56.0]
     steps:
     - uses: actions/checkout@v2
       with:
@@ -32,7 +32,7 @@ jobs:
         toolchain: ${{ matrix.rust }}
         override: true
     - name: Build
-      run: cargo test --verbose --features runtime-ranges
+      run: cargo test --verbose --features runtime-ranges,serialize
   fmt:
     runs-on: ubuntu-latest
     strategy:
@@ -60,4 +60,4 @@ jobs:
         toolchain: stable
         override: true
     - name: Run clippy
-      run: rustup component add clippy && cargo clippy --features runtime-ranges
+      run: rustup component add clippy && cargo clippy --features runtime-ranges,serialize -- -D warnings
